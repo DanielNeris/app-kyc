@@ -5,6 +5,7 @@ import { getKycKpis, type KYCStats } from '@/services/kyc/get-kyc-kpis'
 import { listKyc } from '@/services/kyc/list-kyc'
 import { KYCContext, type KYCList, type KYCUpdate } from '@/hooks/use-kyc'
 import { updateKycStatus } from '@/services/kyc/update-kyc-status'
+import { getKycDetails } from '@/services/kyc/get-kyc-detalis'
 
 export const KYCProvider = ({ children }: { children: React.ReactNode }) => {
   const [kycList, setKycList] = useState<KYCList[]>([])
@@ -89,6 +90,22 @@ export const KYCProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
+  const fetchKYCById = async (id: string) => {
+    try {
+      setIsLoading(true)
+      const response = await getKycDetails(id)
+
+      return response
+    } catch (error) {
+      toast.error({
+        title: 'Error',
+        description: 'Failed to fetch KYC submissions.',
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <KYCContext.Provider
       value={{
@@ -99,6 +116,7 @@ export const KYCProvider = ({ children }: { children: React.ReactNode }) => {
         updateKyc,
         fetchKYCKpis,
         kycKpis,
+        fetchKYCById,
       }}
     >
       {children}

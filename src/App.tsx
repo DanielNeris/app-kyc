@@ -7,6 +7,7 @@ import KYCForm from './pages/KYCForm'
 import { ToastProvider } from './contexts/ToastContext'
 import { PublicRoute } from './components/PublicRoute'
 import { KYCProvider } from './contexts/KycContext'
+import KYCDetails from './pages/KYCDetails'
 
 const App = () => (
   <>
@@ -36,6 +37,14 @@ const App = () => (
                 element={
                   <ProtectedRoute requireAdmin>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/kyc/:id"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <KYCDetails />
                   </ProtectedRoute>
                 }
               />

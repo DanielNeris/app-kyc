@@ -14,8 +14,9 @@ import { AlertCircle, CheckCircle, Users, XCircle } from 'lucide-react'
 import { useKYC } from '@/hooks/use-kyc'
 import { KYCStatus } from '@/components/enums/kycStatus'
 import ModalKyc from '@/components/ui/modalKyc'
+import { useNavigate } from 'react-router-dom'
 
-const PAGE_SIZE = 5
+const PAGE_SIZE = 10
 
 const AdminDashboard = () => {
   const [remarks, setRemarks] = useState('')
@@ -23,6 +24,7 @@ const AdminDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedKYC, setSelectedKYC] = useState(null)
 
+  const navigate = useNavigate()
   const { kycKpis, kycList, fetchKYCKpis, fetchKYCList, updateKyc } = useKYC()
 
   const fetchData = useCallback(async () => {
@@ -50,6 +52,10 @@ const AdminDashboard = () => {
     setIsModalOpen(false)
     setRemarks('')
     await fetchData()
+  }
+
+  const handleRowClick = (kycId: string) => {
+    navigate(`/kyc/${kycId}`)
   }
 
   const totalPages = Math.ceil(kycList.length / PAGE_SIZE)
@@ -137,12 +143,16 @@ const AdminDashboard = () => {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
+                {/* <TableHead>Actions</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentData.map(kyc => (
-                <TableRow key={kyc.id} className="hover:bg-indigo-50">
+                <TableRow
+                  key={kyc.id}
+                  onClick={() => handleRowClick(kyc.user.id)}
+                  className="hover:bg-indigo-50 cursor-pointer"
+                >
                   <TableCell className="font-medium">
                     {kyc.user.fullName}
                   </TableCell>
@@ -162,7 +172,7 @@ const AdminDashboard = () => {
                       <span className="text-red-600 font-medium">Rejected</span>
                     )}
                   </TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     <div className="flex gap-2">
                       <button
                         type="button"
@@ -189,7 +199,7 @@ const AdminDashboard = () => {
                         Reject
                       </button>
                     </div>
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               ))}
             </TableBody>

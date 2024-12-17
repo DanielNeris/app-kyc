@@ -24,12 +24,29 @@ export type KYCUpdate = {
   remarks?: string
 }
 
+export type KYCDetails = {
+  id: string
+  status: string
+  remarks: string
+  createdAt: string
+  updatedAt: string
+  user: {
+    fullName: string
+    email: string
+  }
+  file: {
+    id: string
+    url: string
+  }
+}
+
 type KYCContextType = {
   kycList: KYCList[]
   kycKpis: KYCStats
   isLoading: boolean
   submitKYC: (userId: string, file: File) => Promise<void>
   fetchKYCList: () => Promise<void>
+  fetchKYCById: (id: string) => Promise<KYCDetails>
   fetchKYCKpis: () => Promise<void>
   updateKyc: (data: KYCUpdate) => Promise<void>
 }
