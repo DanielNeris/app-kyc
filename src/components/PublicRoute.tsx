@@ -9,7 +9,10 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   const { user } = useAuth()
 
   if (user) {
-    return <Navigate to="/files" replace />
+    if (user.role === 'admin') {
+      return <Navigate to="/dashboard" replace />
+    }
+    return <Navigate to="/user" replace />
   }
 
   return <>{children}</>

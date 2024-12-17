@@ -6,6 +6,8 @@ import { loginUser, type LoginParams } from '@/services/auth/login'
 import { AuthContext, type User } from '@/hooks/use-auth'
 import { registerUser } from '@/services/auth/register'
 import { STORAGE_KEYS } from '@/constants/storageKeys'
+import { uploadFile } from '@/services/kyc/create-kyc'
+import { jwtDecode } from 'jwt-decode'
 
 interface RegisterParams {
   fullName: string
@@ -13,7 +15,14 @@ interface RegisterParams {
   email: string
   password: string
   confirmPassword: string
-  ddocument: File | null
+  document: File | null
+}
+
+interface DecodedToken {
+  id: string
+  email: string
+  role: string
+  fullName: string
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -39,13 +48,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const response = await loginUser({ email, password })
 
-      const user = {
-        id: response.user.id,
-        email: response.user.email,
-        role: response.user.role,
-      }
-
       const token = response.token
+
+      const decoded: DecodedToken = jwtDecode<DecodedToken>(token)
+
+      const user = {
+        id: decoded.id,
+        email: decoded.email,
+        role: decoded.role,
+        fullName: decoded.fullName,
+      }
 
       localStorage.setItem(STORAGE_KEYS.TOKEN, token)
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user))
@@ -56,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: 'Welcome back!',
       })
 
-      navigate('/files')
+      user.role === 'admin' ? navigate('/dashboard') : navigate('/user')
     } catch (error) {
       toast.error({
         title: 'Error',
@@ -78,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true)
 
-      await registerUser({
+      const response = await registerUser({
         fullName,
         email,
         password,
@@ -86,7 +98,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role,
       })
 
-      // await uploadDocument(document)
+      if (document) {
+        await uploadFile({
+          userId: response.user.id,
+          file: document,
+        })
+      }
 
       toast.success({
         title: 'KYC Submitted',
@@ -103,7 +120,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false)
     }
   }
-
   const logout = () => {
     localStorage.removeItem(STORAGE_KEYS.TOKEN)
     localStorage.removeItem(STORAGE_KEYS.USER)
