@@ -1,33 +1,17 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import AuthLayout from "../components/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const { login } = useAuth();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // TODO: Implement actual login logic
-    if (email === "admin@example.com" && password === "admin") {
-      navigate("/admin");
-      toast({
-        title: "Welcome back!",
-        description: "Successfully logged in as admin",
-      });
-    } else if (email && password) {
-      navigate("/kyc");
-      toast({
-        title: "Welcome!",
-        description: "Successfully logged in",
-      });
-    }
+    await login(email, password);
   };
 
   return (
