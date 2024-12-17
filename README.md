@@ -34,9 +34,7 @@ This project is a frontend for a KYC (Know Your Customer) system that allows use
   Create a `.env` file in the root of the project and define the following variables:
    Update the `.env` file with your configuration:
    ```env
-   DATABASE_URL=
-   JWT_SECRET=your_secret_key
-   BASE_URL=http://localhost:3333
+    VITE_API_URL=http://localhost:3333
    ```
 
 4. **Start the development server:**
