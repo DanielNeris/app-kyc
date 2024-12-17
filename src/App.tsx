@@ -6,39 +6,42 @@ import AdminDashboard from './pages/AdminDashboard'
 import KYCForm from './pages/KYCForm'
 import { ToastProvider } from './contexts/ToastContext'
 import { PublicRoute } from './components/PublicRoute'
+import { KYCProvider } from './contexts/KycContext'
 
 const App = () => (
   <>
     <ToastProvider>
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <Login />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/kyc"
-              element={
-                <PublicRoute>
-                  <KYCForm />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute requireAdmin>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/" element={<Navigate to="/login" replace />} />
-          </Routes>
+          <KYCProvider>
+            <Routes>
+              <Route
+                path="/login"
+                element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/kyc"
+                element={
+                  <PublicRoute>
+                    <KYCForm />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </KYCProvider>
         </AuthProvider>
       </BrowserRouter>
     </ToastProvider>

@@ -1,9 +1,16 @@
 import { STORAGE_KEYS } from '@/constants/storageKeys'
 import httpClient from '@/services/httpClient'
+import type { KYCStatus } from '@/components/enums/kycStatus'
 
-export async function listFiles() {
+export type KYCUpdate = {
+  kycId: string
+  status: KYCStatus
+  remarks?: string
+}
+
+export const updateKycStatus = async (data: KYCUpdate): Promise<void> => {
   try {
-    const response = await httpClient.get('/files', {
+    const response = await httpClient.patch('/kyc/update-status', data, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem(STORAGE_KEYS.TOKEN)}`,
       },

@@ -6,7 +6,6 @@ import { loginUser, type LoginParams } from '@/services/auth/login'
 import { AuthContext, type User } from '@/hooks/use-auth'
 import { registerUser } from '@/services/auth/register'
 import { STORAGE_KEYS } from '@/constants/storageKeys'
-import { uploadFile } from '@/services/kyc/create-kyc'
 import { jwtDecode } from 'jwt-decode'
 
 interface RegisterParams {
