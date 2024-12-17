@@ -24,7 +24,8 @@ export default {
         success: "#22c55e",
         warning: "#f59e0b", 
         error: "#ef4444",
-        background: "#FFFFFF",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
         "text-primary": "#333333",
       },
       keyframes: {
