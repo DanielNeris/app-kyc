@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { UploadCloud, Camera } from 'lucide-react'
-import Modal from '@/components/ui/modal'
+import ModalCamera from '@/components/ui/modalCamera'
 import { useCamera } from '@/hooks/use-camera'
 import { ALLOWED_FILE_TYPES } from '@/constants/allowedFilesTypes'
 import { useAuth } from '@/hooks/use-auth'
@@ -216,7 +216,7 @@ const KYCForm = () => {
               )}
             />
 
-            <Modal
+            <ModalCamera
               open={isModalOpen}
               onClose={() => {
                 setIsModalOpen(false)

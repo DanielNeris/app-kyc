@@ -13,12 +13,15 @@ import {
 import { AlertCircle, CheckCircle, Users, XCircle } from 'lucide-react'
 import { useKYC } from '@/hooks/use-kyc'
 import { KYCStatus } from '@/components/enums/kycStatus'
+import ModalKyc from '@/components/ui/modalKyc'
 
 const PAGE_SIZE = 5
 
 const AdminDashboard = () => {
   const [remarks, setRemarks] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedKYC, setSelectedKYC] = useState(null)
 
   const { kycKpis, kycList, fetchKYCKpis, fetchKYCList, updateKyc } = useKYC()
 
@@ -31,13 +34,24 @@ const AdminDashboard = () => {
     fetchData()
   }, [])
 
-  const handleStatusChange = async ({ id, status }) => {
-    await updateKyc({ kycId: id, status, remarks })
-    await fetchKYCKpis()
-    await fetchKYCList()
+  const handleApprove = async (id: string) => {
+    await updateKyc({ kycId: id, status: KYCStatus.APPROVED, remarks: '' })
+    await fetchData()
   }
 
-  // Paginação - calcular os dados da página atual
+  const handleReject = (id: string) => {
+    setSelectedKYC(id)
+    setIsModalOpen(true)
+  }
+
+  const handleRejectKYC = async (inputValue: string) => {
+    setRemarks(inputValue)
+    await updateKyc({ kycId: selectedKYC, status: KYCStatus.REJECTED, remarks })
+    setIsModalOpen(false)
+    setRemarks('')
+    await fetchData()
+  }
+
   const totalPages = Math.ceil(kycList.length / PAGE_SIZE)
   const currentData = kycList.slice(
     (currentPage - 1) * PAGE_SIZE,
@@ -153,12 +167,7 @@ const AdminDashboard = () => {
                       <button
                         type="button"
                         disabled={kyc.status !== KYCStatus.PENDING}
-                        onClick={() =>
-                          handleStatusChange({
-                            id: kyc.id,
-                            status: KYCStatus.APPROVED,
-                          })
-                        }
+                        onClick={() => handleApprove(kyc.id)}
                         className={`px-3 py-1 text-white rounded-md ${
                           kyc.status === KYCStatus.PENDING
                             ? 'bg-green-600 hover:bg-green-700'
@@ -170,12 +179,7 @@ const AdminDashboard = () => {
                       <button
                         type="button"
                         disabled={kyc.status !== KYCStatus.PENDING}
-                        onClick={() =>
-                          handleStatusChange({
-                            id: kyc.id,
-                            status: KYCStatus.REJECTED,
-                          })
-                        }
+                        onClick={() => handleReject(kyc.id)}
                         className={`px-3 py-1 text-white rounded-md ${
                           kyc.status === KYCStatus.PENDING
                             ? 'bg-red-600 hover:bg-red-700'
@@ -196,8 +200,18 @@ const AdminDashboard = () => {
             onPageChange={setCurrentPage}
           />
         </div>
+
+        <ModalKyc
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleRejectKYC}
+          title="Reject KYC"
+          placeholder="Enter the reason for rejection..."
+          buttonLabel="Confirm Rejection"
+        />
       </div>
     </DashboardLayout>
   )
 }
+
 export default AdminDashboard

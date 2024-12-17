@@ -8,7 +8,7 @@ interface ModalProps {
   videoRef: React.RefObject<HTMLVideoElement>
 }
 
-const Modal = ({ open, onClose, onCapture, videoRef }: ModalProps) => (
+const ModalCamera = ({ open, onClose, onCapture, videoRef }: ModalProps) => (
   <Dialog.Root open={open} onOpenChange={onClose}>
     <Dialog.Content className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-lg p-4 w-full max-w-md">
@@ -32,4 +32,4 @@ const Modal = ({ open, onClose, onCapture, videoRef }: ModalProps) => (
   </Dialog.Root>
 )
 
-export default Modal
+export default ModalCamera
