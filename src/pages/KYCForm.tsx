@@ -1,154 +1,247 @@
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useToast } from "@/hooks/use-toast";
-import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, CheckCircle, XCircle } from "lucide-react";
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useToast } from '@/hooks/use-toast'
 
-const formSchema = z.object({
-  fullName: z.string().min(3, "Nome completo é obrigatório"),
-  email: z.string().email("Email inválido"),
-  document: z.instanceof(File).optional(),
-});
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 
-type FormData = z.infer<typeof formSchema>;
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { UploadCloud, Camera } from 'lucide-react'
+import Modal from '@/components/ui/modal'
+import { useCamera } from '@/hooks/use-camera'
+import { ALLOWED_FILE_TYPES } from '@/constants/allowedFilesTypes'
+import { useAuth } from '@/hooks/use-auth'
+
+const kycSchema = z
+  .object({
+    fullName: z.string().min(3, 'Full name is required'),
+    email: z.string().email('Invalid email'),
+    password: z.string().min(6, 'Password must be at least 6 characters long'),
+    confirmPassword: z
+      .string()
+      .min(6, 'Password confirmation must be at least 6 characters long'),
+    document: z
+      .union([z.instanceof(FileList), z.string()])
+      .refine(
+        value =>
+          typeof value === 'string' ||
+          (value instanceof FileList &&
+            ALLOWED_FILE_TYPES.includes(value[0]?.type)),
+        {
+          message: `Only files of type ${ALLOWED_FILE_TYPES.join(', ')} are allowed.`,
+        }
+      ),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    path: ['confirmPassword'],
+    message: 'Passwords must match',
+  })
+
+type KYCFormValues = z.infer<typeof kycSchema>
 
 const KYCForm = () => {
-  const { toast } = useToast();
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-  });
+  const toast = useToast()
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isUsingCamera, setIsUsingCamera] = useState(false)
 
-  const onSubmit = async (data: FormData) => {
-    try {
-      // Mock API call - replace with actual API integration
-      console.log("Form submitted:", data);
-      toast({
-        title: "KYC Enviado",
-        description: "Seus documentos foram enviados para análise.",
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Ocorreu um erro ao enviar o KYC.",
-      });
-    }
-  };
+  const { register, isLoading } = useAuth()
 
-  // Mock status - replace with actual API data
-  const kycStatus = "PENDING"; // Can be: PENDING, APPROVED, REJECTED
-  const adminRemarks = ""; // Only shown when status is REJECTED
+  const { videoRef, image, startCamera, stopCamera, captureImage } = useCamera()
 
+  const form = useForm<KYCFormValues>({
+    resolver: zodResolver(kycSchema),
+    defaultValues: {
+      fullName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      document: '',
+    },
+  })
+
+  const onSubmit = async (data: KYCFormValues) => {
+    const { fullName, email, password, confirmPassword } = data
+    const documentData = isUsingCamera && image ? image : data.document[0]
+
+    await register({
+      fullName,
+      email,
+      password,
+      confirmPassword,
+      role: 'user',
+      document: documentData,
+    })
+  }
   return (
-    <DashboardLayout>
-      <div className="max-w-2xl mx-auto p-4 space-y-6 animate-fade-in">
-        <Card>
-          <CardHeader>
-            <CardTitle>Envio de Documentos KYC</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {kycStatus && (
-              <div className="mb-6">
-                <div className="flex items-center gap-2 p-4 rounded-lg bg-gray-50">
-                  {kycStatus === "PENDING" && (
-                    <>
-                      <AlertCircle className="text-warning" />
-                      <span>Em análise</span>
-                    </>
-                  )}
-                  {kycStatus === "APPROVED" && (
-                    <>
-                      <CheckCircle className="text-success" />
-                      <span>Aprovado</span>
-                    </>
-                  )}
-                  {kycStatus === "REJECTED" && (
-                    <>
-                      <XCircle className="text-error" />
-                      <div>
-                        <span>Rejeitado</span>
-                        {adminRemarks && (
-                          <p className="text-sm text-gray-600 mt-1">{adminRemarks}</p>
-                        )}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-full max-w-lg px-6 py-8 bg-white shadow-lg rounded-lg">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+          KYC Document Submission
+        </h2>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="fullName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter your full name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="example@email.com"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="Enter your password"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="Confirm your password"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="document"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Document Source</FormLabel>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={!isUsingCamera ? 'default' : 'outline'}
+                      onClick={() => {
+                        setIsUsingCamera(false)
+                        field.onChange('')
+                      }}
+                    >
+                      Upload File
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={isUsingCamera ? 'default' : 'outline'}
+                      onClick={() => {
+                        setIsUsingCamera(true)
+                        setIsModalOpen(true)
+                        startCamera()
+                      }}
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      Use Camera
+                    </Button>
+                  </div>
+
+                  {!isUsingCamera ? (
+                    <FormControl>
+                      <Input
+                        type="file"
+                        accept=".jpg, .jpeg, .png, .pdf"
+                        onChange={e => field.onChange(e.target.files)}
+                      />
+                    </FormControl>
+                  ) : (
+                    image && (
+                      <div className="mt-4">
+                        <p className="text-sm font-semibold mb-2">
+                          Captured Image:
+                        </p>
+                        <img
+                          src={image}
+                          alt="Captured"
+                          className="w-full rounded-md"
+                        />
                       </div>
-                    </>
+                    )
                   )}
-                </div>
-              </div>
-            )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Nome Completo
-                </label>
-                <input
-                  {...register("fullName")}
-                  className="w-full p-2 border rounded-md"
-                  placeholder="Digite seu nome completo"
-                />
-                {errors.fullName && (
-                  <p className="text-sm text-error mt-1">{errors.fullName.message}</p>
-                )}
-              </div>
+            <Modal
+              open={isModalOpen}
+              onClose={() => {
+                setIsModalOpen(false)
+                stopCamera()
+              }}
+              onCapture={() => {
+                captureImage()
+                setIsModalOpen(false)
+              }}
+              videoRef={videoRef}
+            />
 
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Email
-                </label>
-                <input
-                  {...register("email")}
-                  type="email"
-                  className="w-full p-2 border rounded-md"
-                  placeholder="Digite seu email"
-                />
-                {errors.email && (
-                  <p className="text-sm text-error mt-1">{errors.email.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Documento
-                </label>
-                <div className="flex gap-4">
-                  <input
-                    {...register("document")}
-                    type="file"
-                    accept="image/*,.pdf"
-                    className="w-full p-2 border rounded-md"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      // Implement camera capture functionality
-                      console.log("Open camera");
-                    }}
-                    className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80"
-                  >
-                    Câmera
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/80"
-              >
-                Enviar
-              </button>
-            </form>
-          </CardContent>
-        </Card>
+            <Button
+              type="submit"
+              className="w-full bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!form.formState.isValid}
+            >
+              <UploadCloud className="w-4 h-4 mr-2" />
+              Submit KYC
+            </Button>
+          </form>
+        </Form>
       </div>
-    </DashboardLayout>
-  );
-};
+    </div>
+  )
+}
 
-export default KYCForm;
+export default KYCForm

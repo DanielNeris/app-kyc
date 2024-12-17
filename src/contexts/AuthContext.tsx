@@ -1,95 +1,124 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import type React from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useToast } from '@/hooks/use-toast'
+import { loginUser, type LoginParams } from '@/services/auth/login'
+import { AuthContext, type User } from '@/hooks/use-auth'
+import { registerUser } from '@/services/auth/register'
+import { STORAGE_KEYS } from '@/constants/storageKeys'
 
-interface User {
-  email: string;
-  role: 'user' | 'admin';
+interface RegisterParams {
+  fullName: string
+  role: string
+  email: string
+  password: string
+  confirmPassword: string
+  ddocument: File | null
 }
 
-interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  isAuthenticated: boolean;
-  isAdmin: boolean;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const navigate = useNavigate();
-  const { toast } = useToast();
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const navigate = useNavigate()
+  const toast = useToast()
 
   useEffect(() => {
-    // Check for stored auth token on mount
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+    const token = localStorage.getItem(STORAGE_KEYS.TOKEN)
+    const savedUser = localStorage.getItem(STORAGE_KEYS.USER)
 
-  const login = async (email: string, password: string) => {
-    try {
-      // Mock login - replace with actual API call later
-      if (email === 'admin@example.com' && password === 'admin') {
-        const userData = { email, role: 'admin' as const };
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        navigate('/admin');
-        toast({
-          title: "Welcome back!",
-          description: "Successfully logged in as admin",
-        });
-      } else if (email && password) {
-        const userData = { email, role: 'user' as const };
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        navigate('/kyc');
-        toast({
-          title: "Welcome!",
-          description: "Successfully logged in",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Invalid credentials",
-        variant: "destructive",
-      });
+    if (token && savedUser) {
+      setUser(JSON.parse(savedUser))
     }
-  };
+
+    setIsLoading(false)
+  }, [])
+
+  const login = async ({ email, password }: LoginParams) => {
+    try {
+      setIsLoading(true)
+
+      const response = await loginUser({ email, password })
+
+      const user = {
+        id: response.user.id,
+        email: response.user.email,
+        role: response.user.role,
+      }
+
+      const token = response.token
+
+      localStorage.setItem(STORAGE_KEYS.TOKEN, token)
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user))
+      setUser(user)
+
+      toast.success({
+        title: 'Login successful',
+        description: 'Welcome back!',
+      })
+
+      navigate('/files')
+    } catch (error) {
+      toast.error({
+        title: 'Error',
+        description: error.message || 'Invalid email or password.',
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const register = async ({
+    fullName,
+    email,
+    password,
+    confirmPassword,
+    role,
+    document,
+  }: RegisterParams) => {
+    try {
+      setIsLoading(true)
+
+      await registerUser({
+        fullName,
+        email,
+        password,
+        confirmPassword,
+        role,
+      })
+
+      // await uploadDocument(document)
+
+      toast.success({
+        title: 'KYC Submitted',
+        description: 'Your documents have been sent for review.',
+      })
+
+      navigate('/login')
+    } catch (error) {
+      toast.error({
+        title: 'Error',
+        description: error.message,
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-    navigate('/login');
-    toast({
-      title: "Logged out",
-      description: "Successfully logged out",
-    });
-  };
+    localStorage.removeItem(STORAGE_KEYS.TOKEN)
+    localStorage.removeItem(STORAGE_KEYS.USER)
+    setUser(null)
+    navigate('/login')
+
+    toast.success({
+      title: 'Logged out',
+      description: 'Come back soon!',
+    })
+  }
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-        isAuthenticated: !!user,
-        isAdmin: user?.role === 'admin',
-      }}
-    >
+    <AuthContext.Provider value={{ user, login, logout, register, isLoading }}>
       {children}
     </AuthContext.Provider>
-  );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+  )
+}
