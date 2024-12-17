@@ -13,14 +13,22 @@ import {
 import { AlertCircle, CheckCircle, Users, XCircle } from 'lucide-react'
 import { useKYC } from '@/hooks/use-kyc'
 import { KYCStatus } from '@/components/enums/kycStatus'
-import ModalKyc from '@/components/ui/modalKyc'
 import { useNavigate } from 'react-router-dom'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select'
 
 const PAGE_SIZE = 10
 
 const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
 
   const navigate = useNavigate()
   const { kycKpis, kycList, fetchKYCKpis, fetchKYCList } = useKYC()
@@ -38,8 +46,21 @@ const AdminDashboard = () => {
     navigate(`/kyc/${kycId}`)
   }
 
-  const totalPages = Math.ceil(kycList.length / PAGE_SIZE)
-  const currentData = kycList.slice(
+  const filteredData = kycList.filter(kyc => {
+    const matchesSearch =
+      kyc.user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      kyc.user.email.toLowerCase().includes(searchTerm.toLowerCase())
+
+    const matchesStatus =
+      filterStatus === 'all' || filterStatus === ''
+        ? true
+        : kyc.status === filterStatus
+
+    return matchesSearch && matchesStatus
+  })
+
+  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE)
+  const currentData = filteredData.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   )
@@ -56,7 +77,6 @@ const AdminDashboard = () => {
           </span>
         </div>
 
-        {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="bg-white/80 backdrop-blur-md shadow-lg">
             <CardHeader>
@@ -115,7 +135,26 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        {/* KYC Table */}
+        <div className="flex gap-4 mb-4 justify-end w-full">
+          <Input
+            placeholder="Search by name or email..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+          <Select onValueChange={value => setFilterStatus(value)}>
+            <SelectTrigger className="max-w-xs">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value={KYCStatus.PENDING}>Pending</SelectItem>
+              <SelectItem value={KYCStatus.APPROVED}>Approved</SelectItem>
+              <SelectItem value={KYCStatus.REJECTED}>Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="bg-white/90 backdrop-blur-md rounded-lg shadow-lg">
           <Table>
             <TableHeader>
