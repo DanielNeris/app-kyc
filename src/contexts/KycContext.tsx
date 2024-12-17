@@ -51,7 +51,10 @@ export const KYCProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
-  const submitKYC = async (userId: string, file: File) => {
+  const submitKYC = async ({
+    userId,
+    file,
+  }: { userId: string; file: File }) => {
     try {
       setIsLoading(true)
       await uploadFile({ userId, file })

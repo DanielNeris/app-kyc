@@ -7,6 +7,7 @@ import { AuthContext, type User } from '@/hooks/use-auth'
 import { registerUser } from '@/services/auth/register'
 import { STORAGE_KEYS } from '@/constants/storageKeys'
 import { jwtDecode } from 'jwt-decode'
+import { uploadFile } from '@/services/kyc/create-kyc'
 
 interface RegisterParams {
   fullName: string

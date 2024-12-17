@@ -68,9 +68,21 @@ const KYCForm = () => {
     },
   })
 
+  const isDocumentValid =
+    (isUsingCamera && image) ||
+    (form.watch('document') && form.watch('document')[0])
+
   const onSubmit = async (data: KYCFormValues) => {
     const { fullName, email, password, confirmPassword } = data
-    const documentData = isUsingCamera && image ? image : data.document[0]
+    let documentData = isUsingCamera && image ? image : data.document[0]
+
+    if (isUsingCamera && image) {
+      const base64Image = image
+      const file = dataURItoBlob(base64Image)
+      documentData = new File([file], 'captured-image.jpg', {
+        type: 'image/jpeg',
+      })
+    }
 
     await register({
       fullName,
@@ -81,6 +93,20 @@ const KYCForm = () => {
       document: documentData,
     })
   }
+
+  // Function to convert base64 string to Blob
+  const dataURItoBlob = (dataURI: string) => {
+    const byteString = atob(dataURI.split(',')[1])
+    const arrayBuffer = new ArrayBuffer(byteString.length)
+    const uintArray = new Uint8Array(arrayBuffer)
+
+    for (let i = 0; i < byteString.length; i++) {
+      uintArray[i] = byteString.charCodeAt(i)
+    }
+
+    return new Blob([uintArray], { type: 'image/jpeg' })
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-lg px-6 py-8 bg-white shadow-lg rounded-lg">
@@ -232,7 +258,7 @@ const KYCForm = () => {
             <Button
               type="submit"
               className="w-full bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!form.formState.isValid}
+              disabled={!form.formState.isValid || !isDocumentValid}
             >
               <UploadCloud className="w-4 h-4 mr-2" />
               Submit KYC

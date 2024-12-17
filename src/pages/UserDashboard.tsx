@@ -9,7 +9,6 @@ import { useAuth } from '@/hooks/use-auth'
 
 const UserKYCDetails = () => {
   const { user } = useAuth()
-  const navigate = useNavigate()
   const { fetchKYCById } = useKYC()
 
   const [kycDetails, setKYCDetails] = useState<KYCDetails | null>(null)
