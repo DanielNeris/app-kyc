@@ -219,7 +219,7 @@ const KYCForm = () => {
                     <FormControl>
                       <Input
                         type="file"
-                        accept=".jpg, .jpeg, .png, .pdf"
+                        accept=".jpg, .jpeg, .png"
                         onChange={e => field.onChange(e.target.files)}
                       />
                     </FormControl>
