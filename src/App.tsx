@@ -13,7 +13,7 @@ import UserDashboard from './pages/UserDashboard'
 const App = () => (
   <>
     <ToastProvider>
-      <BrowserRouter basename="/">
+      <BrowserRouter>
         <AuthProvider>
           <KYCProvider>
             <Routes>
