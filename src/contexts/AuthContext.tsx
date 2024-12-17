@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: 'Welcome back!',
       })
 
-      user.role === 'admin' ? navigate('/dashboard') : navigate('/user')
+      user.role === 'admin' ? navigate('/dashboard') : navigate('/user-profile')
     } catch (error) {
       toast.error({
         title: 'Error',

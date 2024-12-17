@@ -12,7 +12,7 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
     if (user.role === 'admin') {
       return <Navigate to="/dashboard" replace />
     }
-    return <Navigate to="/user" replace />
+    return <Navigate to="/user-profile" replace />
   }
 
   return <>{children}</>

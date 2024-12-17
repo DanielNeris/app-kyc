@@ -8,6 +8,7 @@ import { ToastProvider } from './contexts/ToastContext'
 import { PublicRoute } from './components/PublicRoute'
 import { KYCProvider } from './contexts/KycContext'
 import KYCDetails from './pages/KYCDetails'
+import UserDashboard from './pages/UserDashboard'
 
 const App = () => (
   <>
@@ -45,6 +46,14 @@ const App = () => (
                 element={
                   <ProtectedRoute requireAdmin>
                     <KYCDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/user-profile"
+                element={
+                  <ProtectedRoute>
+                    <UserDashboard />
                   </ProtectedRoute>
                 }
               />

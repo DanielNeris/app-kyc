@@ -19,13 +19,11 @@ import { useNavigate } from 'react-router-dom'
 const PAGE_SIZE = 10
 
 const AdminDashboard = () => {
-  const [remarks, setRemarks] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedKYC, setSelectedKYC] = useState(null)
 
   const navigate = useNavigate()
-  const { kycKpis, kycList, fetchKYCKpis, fetchKYCList, updateKyc } = useKYC()
+  const { kycKpis, kycList, fetchKYCKpis, fetchKYCList } = useKYC()
 
   const fetchData = useCallback(async () => {
     await fetchKYCKpis()
@@ -35,24 +33,6 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchData()
   }, [])
-
-  const handleApprove = async (id: string) => {
-    await updateKyc({ kycId: id, status: KYCStatus.APPROVED, remarks: '' })
-    await fetchData()
-  }
-
-  const handleReject = (id: string) => {
-    setSelectedKYC(id)
-    setIsModalOpen(true)
-  }
-
-  const handleRejectKYC = async (inputValue: string) => {
-    setRemarks(inputValue)
-    await updateKyc({ kycId: selectedKYC, status: KYCStatus.REJECTED, remarks })
-    setIsModalOpen(false)
-    setRemarks('')
-    await fetchData()
-  }
 
   const handleRowClick = (kycId: string) => {
     navigate(`/kyc/${kycId}`)
@@ -143,7 +123,6 @@ const AdminDashboard = () => {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Status</TableHead>
-                {/* <TableHead>Actions</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -172,34 +151,6 @@ const AdminDashboard = () => {
                       <span className="text-red-600 font-medium">Rejected</span>
                     )}
                   </TableCell>
-                  {/* <TableCell>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        disabled={kyc.status !== KYCStatus.PENDING}
-                        onClick={() => handleApprove(kyc.id)}
-                        className={`px-3 py-1 text-white rounded-md ${
-                          kyc.status === KYCStatus.PENDING
-                            ? 'bg-green-600 hover:bg-green-700'
-                            : 'bg-gray-300 cursor-not-allowed'
-                        }`}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        type="button"
-                        disabled={kyc.status !== KYCStatus.PENDING}
-                        onClick={() => handleReject(kyc.id)}
-                        className={`px-3 py-1 text-white rounded-md ${
-                          kyc.status === KYCStatus.PENDING
-                            ? 'bg-red-600 hover:bg-red-700'
-                            : 'bg-gray-300 cursor-not-allowed'
-                        }`}
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  </TableCell> */}
                 </TableRow>
               ))}
             </TableBody>
@@ -210,15 +161,6 @@ const AdminDashboard = () => {
             onPageChange={setCurrentPage}
           />
         </div>
-
-        <ModalKyc
-          open={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSubmit={handleRejectKYC}
-          title="Reject KYC"
-          placeholder="Enter the reason for rejection..."
-          buttonLabel="Confirm Rejection"
-        />
       </div>
     </DashboardLayout>
   )

@@ -5,21 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useKYC, type KYCDetails } from '@/hooks/use-kyc'
 import { KYCStatus } from '@/components/enums/kycStatus'
-import ModalKyc from '@/components/ui/modalKyc'
+import { useAuth } from '@/hooks/use-auth'
 
-const KYCDetailsPage = () => {
-  const { id } = useParams()
+const UserKYCDetails = () => {
+  const { user } = useAuth()
   const navigate = useNavigate()
-  const { fetchKYCById, updateKyc } = useKYC()
+  const { fetchKYCById } = useKYC()
 
   const [kycDetails, setKYCDetails] = useState<KYCDetails | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await fetchKYCById(id)
+        const data = await fetchKYCById(user.id)
         setKYCDetails(data)
       } catch (error) {
         console.error('Failed to fetch KYC details:', error)
@@ -29,34 +28,13 @@ const KYCDetailsPage = () => {
     }
 
     fetchData()
-  }, [id])
-
-  const handleApprove = async () => {
-    await updateKyc({
-      kycId: kycDetails.id,
-      status: KYCStatus.APPROVED,
-      remarks: '',
-    })
-    const updatedData = await fetchKYCById(id)
-    setKYCDetails(updatedData)
-  }
-
-  const handleReject = async (inputValue: string) => {
-    await updateKyc({
-      kycId: kycDetails.id,
-      status: KYCStatus.REJECTED,
-      remarks: inputValue,
-    })
-    setIsModalOpen(false)
-    const updatedData = await fetchKYCById(id)
-    setKYCDetails(updatedData)
-  }
+  }, [user.id])
 
   if (loading) {
     return (
       <DashboardLayout>
         <div className="flex justify-center items-center h-screen">
-          <p className="text-lg font-semibold text-gray-500">Loading...</p>
+          <p className="text-gray-500">Loading...</p>
         </div>
       </DashboardLayout>
     )
@@ -66,9 +44,7 @@ const KYCDetailsPage = () => {
     return (
       <DashboardLayout>
         <div className="flex justify-center items-center h-screen">
-          <p className="text-lg font-semibold text-red-500">
-            KYC details not found.
-          </p>
+          <p className="text-red-500">KYC details not found.</p>
         </div>
       </DashboardLayout>
     )
@@ -77,23 +53,13 @@ const KYCDetailsPage = () => {
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            KYC Details
-          </h1>
-          <Button variant="outline" onClick={() => navigate(-1)}>
-            Back to Dashboard
-          </Button>
-        </div>
-
-        {/* User Information */}
-        <Card className="bg-white shadow-lg">
+        <Card className="shadow-md">
           <CardHeader>
             <CardTitle>User Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <p>
-              <strong>Name:</strong> {kycDetails.user.fullName}
+              <strong>Full Name:</strong> {kycDetails.user.fullName}
             </p>
             <p>
               <strong>Email:</strong> {kycDetails.user.email}
@@ -112,25 +78,31 @@ const KYCDetailsPage = () => {
                 {kycDetails.status}
               </span>
             </p>
-            {kycDetails.status === KYCStatus.REJECTED && (
-              <p>
-                <strong>Rejection Reason:</strong>{' '}
-                <span className="text-gray-800">
-                  {kycDetails.remarks || 'No remarks provided'}
-                </span>
-              </p>
-            )}
+            <p>
+              {kycDetails.status === KYCStatus.REJECTED && (
+                <p>
+                  <strong>Rejection Reason:</strong>{' '}
+                  <span className="text-red-600">
+                    {kycDetails.remarks || 'No remarks provided'}
+                  </span>
+                </p>
+              )}
+            </p>
+
             <p>
               <strong>Created At:</strong>{' '}
               {new Date(kycDetails.createdAt).toLocaleString()}
             </p>
+            <p>
+              <strong>Updated At:</strong>{' '}
+              {new Date(kycDetails.updatedAt).toLocaleString()}
+            </p>
           </CardContent>
         </Card>
 
-        {/* Document Information */}
-        <Card className="bg-white shadow-lg">
+        <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Document</CardTitle>
+            <CardTitle>Document Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <p>
@@ -140,8 +112,8 @@ const KYCDetailsPage = () => {
               <strong>Document Preview:</strong>
               <img
                 src={kycDetails.file.url}
-                alt="Document"
-                className="mt-2 w-full max-w-md rounded-md border"
+                alt="Document Preview"
+                className="mt-2 max-w-xs rounded-md border"
               />
             </div>
             <p>
@@ -157,36 +129,9 @@ const KYCDetailsPage = () => {
             </p>
           </CardContent>
         </Card>
-
-        {/* Action Buttons */}
-        {kycDetails.status === KYCStatus.PENDING && (
-          <div className="flex gap-4">
-            <Button
-              onClick={handleApprove}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              Approve
-            </Button>
-            <Button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              Reject
-            </Button>
-          </div>
-        )}
       </div>
-
-      <ModalKyc
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleReject}
-        title="Reject KYC"
-        placeholder="Enter the reason for rejection..."
-        buttonLabel="Confirm Rejection"
-      />
     </DashboardLayout>
   )
 }
 
-export default KYCDetailsPage
+export default UserKYCDetails
