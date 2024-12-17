@@ -3,7 +3,12 @@ import { useToast } from '@/hooks/use-toast'
 import { uploadFile } from '@/services/kyc/create-kyc'
 import { getKycKpis, type KYCStats } from '@/services/kyc/get-kyc-kpis'
 import { listKyc } from '@/services/kyc/list-kyc'
-import { KYCContext, type KYCList, type KYCUpdate } from '@/hooks/use-kyc'
+import {
+  KYCContext,
+  type KYCList,
+  type KYCSubmit,
+  type KYCUpdate,
+} from '@/hooks/use-kyc'
 import { updateKycStatus } from '@/services/kyc/update-kyc-status'
 import { getKycDetails } from '@/services/kyc/get-kyc-detalis'
 
@@ -51,10 +56,7 @@ export const KYCProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
-  const submitKYC = async ({
-    userId,
-    file,
-  }: { userId: string; file: File }) => {
+  const submitKYC = async ({ userId, file }: KYCSubmit) => {
     try {
       setIsLoading(true)
       await uploadFile({ userId, file })

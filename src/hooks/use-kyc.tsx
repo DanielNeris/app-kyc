@@ -40,11 +40,13 @@ export type KYCDetails = {
   }
 }
 
+export type KYCSubmit = { userId: string; file: File }
+
 type KYCContextType = {
   kycList: KYCList[]
   kycKpis: KYCStats
   isLoading: boolean
-  submitKYC: (userId: string, file: File) => Promise<void>
+  submitKYC: (data: KYCSubmit) => Promise<void>
   fetchKYCList: () => Promise<void>
   fetchKYCById: (id: string) => Promise<KYCDetails>
   fetchKYCKpis: () => Promise<void>
